@@ -104,6 +104,9 @@ export interface BaseOptions {
   /* Initial value of the seconds element, when no date is selected */
   defaultSeconds: number;
 
+  /* Initial value of the milliseconds element, when no date is selected */
+  defaultMilliseconds: number;
+
   /*
     Disables certain dates, preventing them from being selected.
     See https://chmln.github.io/flatpickr/examples/#disabling-specific-dates */
@@ -119,6 +122,10 @@ By default, Flatpickr utilizes native datetime widgets unless certain options (e
   /* Enables seconds selection in the time picker.
    */
   enableSeconds: boolean;
+
+  /* Enables milliseconds selection in the time picker.
+   */
+  enableMilliseconds: boolean;
 
   /* Enables the time picker */
   enableTime: boolean;
@@ -272,10 +279,12 @@ export interface ParsedOptions {
   defaultHour: number;
   defaultMinute: number;
   defaultSeconds: number;
+  defaultMilliseconds: number;
   disable: DateLimit<Date>[];
   disableMobile: boolean;
   enable: DateLimit<Date>[];
   enableSeconds: boolean;
+  enableMilliseconds: boolean;
   enableTime: boolean;
   errorHandler: (err: Error) => void;
   formatDate?: Options["formatDate"];
@@ -337,9 +346,11 @@ export const defaults: ParsedOptions = {
   defaultHour: 12,
   defaultMinute: 0,
   defaultSeconds: 0,
+  defaultMilliseconds: 0,
   disable: [],
   disableMobile: false,
   enable: [],
+  enableMilliseconds: false,
   enableSeconds: false,
   enableTime: false,
   errorHandler: (err: Error) =>

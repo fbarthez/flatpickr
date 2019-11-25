@@ -1,4 +1,5 @@
 export const pad = (number: string | number) => `0${number}`.slice(-2);
+export const mspad = (number: string | number) => `00${number}`.slice(-3);
 export const int = (bool: boolean) => (bool === true ? 1 : 0);
 
 /* istanbul ignore next */

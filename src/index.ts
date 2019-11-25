@@ -14,7 +14,7 @@ import {
 import { Locale, CustomLocale, key as LocaleKey } from "./types/locale";
 import English from "./l10n/default";
 
-import { arrayify, debounce, int, pad, IncrementEvent } from "./utils";
+import { arrayify, debounce, int, pad, mspad, IncrementEvent } from "./utils";
 import {
   clearNode,
   createElement,
@@ -214,6 +214,10 @@ function FlatpickrInstance(
       seconds =
         self.secondElement !== undefined
           ? (parseInt(self.secondElement.value, 10) || 0) % 60
+          : 0,
+      milliseconds =
+        self.millisecondElement !== undefined
+          ? parseInt(self.millisecondElement.value, 10) || 0
           : 0;
 
     if (self.amPM !== undefined) {
@@ -247,6 +251,9 @@ function FlatpickrInstance(
 
       if (minutes === maxTime.getMinutes())
         seconds = Math.min(seconds, maxTime.getSeconds());
+
+      if (seconds === maxTime.getSeconds())
+        milliseconds = Math.min(milliseconds, maxTime.getMilliseconds());
     }
 
     if (limitMinHours) {
@@ -261,8 +268,9 @@ function FlatpickrInstance(
       if (minutes === minTime.getMinutes())
         seconds = Math.max(seconds, minTime.getSeconds());
     }
-
-    setHours(hours, minutes, seconds);
+    // TODO FP handle milliseconds in minHours/maxHours contexts
+    console.log("setHoursFromInputs milliseconds: " + milliseconds);
+    setHours(hours, minutes, seconds, milliseconds);
   }
 
   /**
@@ -271,13 +279,20 @@ function FlatpickrInstance(
   function setHoursFromDate(dateObj?: Date) {
     const date = dateObj || self.latestSelectedDateObj;
 
-    if (date) setHours(date.getHours(), date.getMinutes(), date.getSeconds());
+    if (date)
+      setHours(
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds(),
+        date.getMilliseconds()
+      );
   }
 
   function setDefaultHours() {
     let hours = self.config.defaultHour;
     let minutes = self.config.defaultMinute;
     let seconds = self.config.defaultSeconds;
+    let milliseconds = self.config.defaultMilliseconds;
 
     if (self.config.minDate !== undefined) {
       const minHr = self.config.minDate.getHours();
@@ -297,8 +312,8 @@ function FlatpickrInstance(
       if (hours === maxHr && minutes === maxMinutes)
         seconds = self.config.maxDate.getSeconds();
     }
-
-    setHours(hours, minutes, seconds);
+    // TODO FP handle milliseconds in minDate/maxDate contexts
+    setHours(hours, minutes, seconds, milliseconds);
   }
 
   /**
@@ -309,10 +324,21 @@ function FlatpickrInstance(
    *                 or am-pm gets inferred from config
    * @param {Number} minutes the minutes
    * @param {Number} seconds the seconds (optional)
+   * @param {Number} milliseconds the milliseconds (optional)
    */
-  function setHours(hours: number, minutes: number, seconds: number) {
+  function setHours(
+    hours: number,
+    minutes: number,
+    seconds: number,
+    milliseconds: number
+  ) {
     if (self.latestSelectedDateObj !== undefined) {
-      self.latestSelectedDateObj.setHours(hours % 24, minutes, seconds || 0, 0);
+      self.latestSelectedDateObj.setHours(
+        hours % 24,
+        minutes,
+        seconds || 0,
+        milliseconds || 0
+      );
     }
 
     if (!self.hourElement || !self.minuteElement || self.isMobile) return;
@@ -330,6 +356,11 @@ function FlatpickrInstance(
 
     if (self.secondElement !== undefined)
       self.secondElement.value = pad(seconds);
+
+    if (self.millisecondElement !== undefined) {
+      console.log("setHours milliseconds: " + milliseconds);
+      self.millisecondElement.value = mspad(milliseconds);
+    }
   }
 
   /**
@@ -466,6 +497,13 @@ function FlatpickrInstance(
           self.secondElement,
           "focus",
           () => self.secondElement && self.secondElement.select()
+        );
+
+      if (self.millisecondElement !== undefined)
+        bind(
+          self.millisecondElement,
+          "focus",
+          () => self.millisecondElement && self.millisecondElement.select()
         );
 
       if (self.amPM !== undefined) {
@@ -832,7 +870,10 @@ function FlatpickrInstance(
     const firstOfMonth =
       (new Date(year, month, 1).getDay() - self.l10n.firstDayOfWeek + 7) % 7;
 
-    const prevMonthDays = self.utils.getDaysInMonth((month - 1 + 12) % 12, year);
+    const prevMonthDays = self.utils.getDaysInMonth(
+      (month - 1 + 12) % 12,
+      year
+    );
 
     const daysInMonth = self.utils.getDaysInMonth(month, year),
       days = window.document.createDocumentFragment(),
@@ -1182,6 +1223,34 @@ function FlatpickrInstance(
         createElement("span", "flatpickr-time-separator", ":")
       );
       self.timeContainer.appendChild(secondInput);
+    }
+
+    if (self.config.enableMilliseconds) {
+      self.timeContainer.classList.add("hasMilliseconds");
+
+      const millisecondInput = createNumberInput("flatpickr-millisecond");
+      self.millisecondElement = millisecondInput.getElementsByTagName(
+        "input"
+      )[0] as HTMLInputElement;
+
+      self.millisecondElement.value = pad(
+        self.latestSelectedDateObj
+          ? self.latestSelectedDateObj.getMilliseconds()
+          : self.config.defaultMilliseconds
+      );
+
+      self.millisecondElement.setAttribute(
+        "step",
+        self.minuteElement.getAttribute("step") as string
+      );
+      self.millisecondElement.setAttribute("min", "0");
+      self.millisecondElement.setAttribute("max", "999");
+
+      self.timeContainer.appendChild(
+        // TODO FP use different separator between seconds and milliseconds?
+        createElement("span", "flatpickr-time-separator", ":")
+      );
+      self.timeContainer.appendChild(millisecondInput);
     }
 
     if (!self.config.time_24hr) {
@@ -1701,6 +1770,7 @@ function FlatpickrInstance(
               self.hourElement,
               self.minuteElement,
               self.secondElement,
+              self.millisecondElement,
               self.amPM,
             ] as Node[])
               .concat(self.pluginElements)
@@ -2819,6 +2889,8 @@ function FlatpickrInstance(
       }
 
       input.value = pad(newValue);
+    } else if (typeof input.value !== "undefined" && input.value.length === 3) {
+      input.value = mspad(newValue);
     }
   }
 
