@@ -269,7 +269,6 @@ function FlatpickrInstance(
         seconds = Math.max(seconds, minTime.getSeconds());
     }
     // TODO FP handle milliseconds in minHours/maxHours contexts
-    console.log("setHoursFromInputs milliseconds: " + milliseconds);
     setHours(hours, minutes, seconds, milliseconds);
   }
 
@@ -358,7 +357,6 @@ function FlatpickrInstance(
       self.secondElement.value = pad(seconds);
 
     if (self.millisecondElement !== undefined) {
-      console.log("setHours milliseconds: " + milliseconds);
       self.millisecondElement.value = mspad(milliseconds);
     }
   }
