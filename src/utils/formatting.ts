@@ -1,4 +1,4 @@
-import { int, pad } from "../utils";
+import { int, pad, mspad } from "../utils";
 import { Locale } from "../types/locale";
 import { ParsedOptions } from "../types/options";
 
@@ -11,6 +11,7 @@ export type token =
   | "K"
   | "M"
   | "S"
+  | "T"
   | "U"
   | "W"
   | "Y"
@@ -23,6 +24,7 @@ export type token =
   | "m"
   | "n"
   | "s"
+  | "t"
   | "u"
   | "w"
   | "y";
@@ -66,6 +68,9 @@ export const revFormat: RevFormat = {
   },
   S: (dateObj: Date, seconds: string) => {
     dateObj.setSeconds(parseFloat(seconds));
+  },
+  T: (dateObj: Date, milliseconds: string) => {
+    dateObj.setMilliseconds(parseFloat(milliseconds));
   },
   U: (_: Date, unixSeconds: string) => new Date(parseFloat(unixSeconds) * 1000),
 
@@ -111,6 +116,9 @@ export const revFormat: RevFormat = {
   s: (dateObj: Date, seconds: string) => {
     dateObj.setSeconds(parseFloat(seconds));
   },
+  t: (dateObj: Date, milliseconds: string) => {
+    dateObj.setMilliseconds(parseFloat(milliseconds));
+  },
   u: (_: Date, unixMillSeconds: string) =>
     new Date(parseFloat(unixMillSeconds)),
   w: doNothing,
@@ -129,6 +137,7 @@ export const tokenRegex: TokenRegex = {
   K: "", // locale-dependent, setup on runtime
   M: "(\\w+)",
   S: "(\\d\\d|\\d)",
+  T: "(\\d\\d|\\d)",
   U: "(.+)",
   W: "(\\d\\d|\\d)",
   Y: "(\\d{4})",
@@ -141,6 +150,7 @@ export const tokenRegex: TokenRegex = {
   m: "(\\d\\d|\\d)",
   n: "(\\d\\d|\\d)",
   s: "(\\d\\d|\\d)",
+  t: "(\\d\\d|\\d)",
   u: "(.+)",
   w: "(\\d\\d|\\d)",
   y: "(\\d{2})",
@@ -196,6 +206,9 @@ export const formats: Formats = {
   // seconds 00-59
   S: (date: Date) => pad(date.getSeconds()),
 
+  // milliseconds 000-999
+  T: (date: Date) => mspad(date.getMilliseconds()),
+
   // unix timestamp
   U: (date: Date) => date.getTime() / 1000,
 
@@ -231,6 +244,9 @@ export const formats: Formats = {
 
   // seconds 0-59
   s: (date: Date) => date.getSeconds(),
+
+  // milliseconds 0-999
+  t: (date: Date) => date.getMilliseconds(),
 
   // Unix Milliseconds
   u: (date: Date) => date.getTime(),
